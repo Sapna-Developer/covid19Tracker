@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Covid Dashboard</title>
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.19/"></script>
+
+    <script>
+    require([
+     "esri/config",
+     "esri/Map",
+     "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/layers/CSVLayer",
+        "esri/renderers/SimpleRenderer",
+        "esri/symbols/PointSymbol3D",
+        "esri/symbols/IconSymbol3DLayer",
+        "dojo/text!./state_wise.csv"
+    ], function (esriConfig, Map, MapView, FeatureLayer, CSVLayer, SimpleRenderer,PointSymbol3D, IconSymbol3DLayer,csvdata) {
+
+        esriConfig.apiKey = "AAPK3f892610dae742a8aa6fbed4caf4cfb5NmHv1H_T9JsoHGl-xqflv4MTcH40758IntOKzp3Sv3Gd-dR9TB4LZnmxDlvLm3G9";
+      const map = new Map({
+          basemap: "arcgis-streets"
+      });
+
+        const indianStateLayer = new FeatureLayer({
+            url: "https://incois.gov.in/gisserver/rest/services/OPEN/IndiaBoundaries/MapServer/1"
+        });
+        var template = {
+            title: "Covid Info {state}",
+            content: "Deaths {Deaths} <br> Active {Active} <br> Confirmed {Confirmed} "
+        };
+
+        const blob = new Blob([csvdata], {
+            type: "plain/text"
+        });
+        let csv_url = URL.createObjectURL(blob);
+
+        //console.log(csv_url);
+        //console.log(csvdata);
+
+        var stateWiseCsvLayer = new CSVLayer({
+            url: csv_url,
+            popupTemplate: template,
+            rendere: {
+                type: "simple",  // autocasts as new SimpleRenderer()
+                symbol: {
+                    type: "simple-marker",  // autocasts as new SimpleMarkerSymbol()
+                    size: 12,
+                    color: "red",
+                    outline: {  // autocasts as new SimpleLineSymbol()
+                        width: 2,
+                        color: "blue"
+                    }
+                }
+            }
+        });
+        stateWiseCsvLayer.load().then(function (data) {
+            return stateWiseCsvLayer.queryFeatures();
+        });
+
+      const view = new MapView({
+        map: map,
+        center: [79, 26],
+        zoom: 3, // scale: 72223.819286
+        container: "viewDiv",
+        constraints: {
+          snapToZoom: false
+        }
+      });
+
+        map.add(indianStateLayer);
+        map.add(stateWiseCsvLayer);
+
+    });
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+    
+
+</body>
+
+</html>
